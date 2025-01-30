@@ -1,0 +1,8 @@
+bip_utils
+base58
+mnemonic
+urllib3
+requests
+hdwallet
+httpx
+
